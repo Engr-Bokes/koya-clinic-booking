@@ -25,9 +25,10 @@
     <section class="access card" aria-labelledby="access-title">
       <div><p class="eyebrow">GET CONNECTED</p><h2 id="access-title">Your demo access</h2><p class="muted">Enter your API key to load appointment slots. <a href="/docs#authentication">API access instructions</a></p></div>
       <form id="access-form">
-        <div class="access-row"><div class="field grow"><label for="api-key">API key</label><input id="api-key" name="api-key" type="password" required autocomplete="off" spellcheck="false" aria-describedby="key-help"></div><button id="connect-button" type="submit">Connect</button></div>
+        <div class="access-row"><div class="field grow"><label for="api-key">API key</label><input id="api-key" name="api-key" type="password" required autocomplete="off" spellcheck="false" aria-describedby="key-help"></div><button id="connect-button" type="submit" aria-describedby="access-ready-hint" disabled>Connect</button></div>
         <label class="check"><input id="remember-key" type="checkbox">Keep the key for this tab’s session</label>
         <p id="key-help" class="hint">Kept in memory unless you opt in. Never saved in local storage.</p>
+        <p id="access-ready-hint" class="hint">Enter your API key to enable Connect.</p>
         <p id="access-message" class="message" role="status" aria-live="polite"></p>
       </form>
     </section>
@@ -52,7 +53,8 @@
             <div class="field"><label for="patient-name">Full name</label><input id="patient-name" name="name" autocomplete="name" required maxlength="200" placeholder="e.g. Alex Morgan"></div>
             <div class="field"><label for="patient-email">Email address</label><input id="patient-email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="alex@example.com"></div>
             <p class="hint">This is a demo. Please use fictional details.</p>
-            <button id="book-button" class="full-width" type="submit">Confirm appointment</button>
+            <p id="booking-ready-hint" class="hint">Choose an available appointment, then enter your name and a valid email.</p>
+            <button id="book-button" class="full-width" type="submit" aria-describedby="booking-ready-hint" disabled>Confirm appointment</button>
           </fieldset>
           <p id="booking-message" class="message" role="status" aria-live="polite"></p>
         </form>
@@ -62,7 +64,8 @@
 
     <section id="manage" class="manage card" aria-labelledby="manage-title">
       <div><p class="eyebrow">ALREADY BOOKED?</p><h2 id="manage-title">Pick up where you left off.</h2><p class="muted">Look up a booking to check its details or cancel it.</p></div>
-      <form id="lookup-form"><div class="field"><label for="booking-id">Booking reference</label><input id="booking-id" name="booking-id" required autocomplete="off" spellcheck="false" placeholder="Enter your booking ID" disabled></div><button id="lookup-button" class="secondary" type="submit" disabled>Find booking</button></form>
+      <form id="lookup-form"><div class="field"><label for="booking-id">Booking reference</label><input id="booking-id" name="booking-id" required autocomplete="off" spellcheck="false" placeholder="Enter your booking ID" disabled></div><button id="lookup-button" class="secondary" type="submit" aria-describedby="lookup-ready-hint" disabled>Find booking</button></form>
+      <p id="lookup-ready-hint" class="hint">Enter a booking reference to enable Find booking.</p>
       <p id="lookup-message" class="message" role="status" aria-live="polite"></p>
       <section id="booking-result" class="booking-result" aria-labelledby="result-title" tabindex="-1" hidden>
         <div class="section-heading"><h3 id="result-title">Booking details</h3><span id="result-status" class="status-badge"></span></div>

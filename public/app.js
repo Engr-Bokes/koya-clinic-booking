@@ -33,23 +33,47 @@
     const email = $('patient-email').value.trim().toLowerCase();
     return Math.max(0, Math.ceil(((cooldowns.get(email) || 0) - Date.now()) / 1000));
   }
+  function hasText(id) { return $(id).value.trim().length > 0; }
+  function validBookingDetails() {
+    const name = $('patient-name').value.trim();
+    const email = $('patient-email').value.trim();
+    return name.length > 0 && name.length <= 200 && email.length <= 254 &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && $('patient-email').validity.valid;
+  }
   function updateControls() {
-    $('connect-button').disabled = requests > 0;
-    $('provider').disabled = !apiKey || loadingSlots || submitting || cancelling || lookingUp;
-    $('filter-button').disabled = !apiKey || loadingSlots || submitting || cancelling || lookingUp;
-    $('refresh-button').disabled = !apiKey || loadingSlots || submitting || cancelling || lookingUp;
-    $('slot-options').disabled = !apiKey || loadingSlots || submitting;
-    $('booking-fields').disabled = !apiKey || !selected || submitting || cancelling || lookingUp || loadingSlots;
+    const busy = requests > 0 || loadingSlots || submitting || cancelling || lookingUp;
+    const keyReady = hasText('api-key');
+    const slotReady = !!selected && usable(selected);
+    const detailsReady = validBookingDetails();
+    const referenceReady = hasText('booking-id');
     const wait = remaining();
-    $('book-button').disabled = submitting || wait > 0;
+    $('connect-button').disabled = !keyReady || busy;
+    $('provider').disabled = !apiKey || busy;
+    // Provider is optional: an empty filter must still be able to show all slots.
+    $('filter-button').disabled = !apiKey || busy;
+    $('refresh-button').disabled = !apiKey || busy;
+    $('slot-options').disabled = !apiKey || busy;
+    $('booking-fields').disabled = !apiKey || !slotReady || busy;
+    $('book-button').disabled = !apiKey || !slotReady || !detailsReady || busy || wait > 0;
     $('book-button').textContent = submitting ? 'Confirming…' : wait ? `Try again in ${wait}s` : 'Confirm appointment';
-    $('booking-id').disabled = !apiKey || lookingUp || cancelling || submitting || loadingSlots;
-    $('lookup-button').disabled = !apiKey || lookingUp || cancelling || submitting || loadingSlots;
+    $('booking-id').disabled = !apiKey || busy;
+    $('lookup-button').disabled = !apiKey || !referenceReady || busy;
     $('lookup-button').textContent = lookingUp ? 'Finding…' : 'Find booking';
-    $('cancel-button').disabled = cancelling || submitting || lookingUp || loadingSlots;
-    $('cancel-yes').disabled = cancelling || submitting || lookingUp || loadingSlots;
+    $('cancel-button').disabled = !booking || booking.status !== 'confirmed' || busy;
+    $('cancel-yes').disabled = !booking || booking.status !== 'confirmed' || busy;
     $('cancel-no').disabled = cancelling;
     $('cancel-yes').textContent = cancelling ? 'Cancelling…' : 'Yes, cancel appointment';
+    $('access-ready-hint').textContent = busy ? 'Wait for the current request to finish.' : keyReady ? 'API key entered. You can connect.' : 'Enter your API key to enable Connect.';
+    $('booking-ready-hint').textContent = !apiKey ? 'Connect with your API key first.' :
+      !slotReady ? 'Choose an available appointment first.' :
+      !hasText('patient-name') ? 'Enter your full name to continue.' :
+      !hasText('patient-email') ? 'Enter your email address to continue.' :
+      !detailsReady ? 'Enter a valid email address, for example alex@example.com. Name and email must fit their field limits.' :
+      wait > 0 ? `Wait ${wait} seconds before trying again with this email.` :
+      busy ? 'Wait for the current request to finish.' : 'All required details are filled. You can confirm your appointment.';
+    $('lookup-ready-hint').textContent = !apiKey ? 'Connect with your API key first.' :
+      !referenceReady ? 'Enter a booking reference to enable Find booking.' :
+      busy ? 'Wait for the current request to finish.' : 'Booking reference entered. You can look it up.';
   }
   class ApiError extends Error {
     constructor(text, status, retryAfter) { super(text); this.status = status; this.retryAfter = retryAfter; }
@@ -208,7 +232,8 @@
   $('access-form').addEventListener('submit', async event => {
     event.preventDefault();
     const key = $('api-key').value.trim();
-    if (!key || requests > 0) return;
+    updateControls();
+    if ($('connect-button').disabled) return;
     apiKey = key;
     slots.clear(); currentSlots = []; selected = null; booking = null; attempt = null;
     $('booking-result').hidden = true;
@@ -226,6 +251,9 @@
     message('access-message', loaded ? 'Connected. Choose an appointment below.' : 'Connection could not be verified. Check the schedule message below.', loaded ? 'success' : 'error');
     $('connect-button').textContent = 'Reconnect';
   });
+  ['api-key', 'booking-id'].forEach(id => {
+    ['input', 'change'].forEach(event => $(id).addEventListener(event, updateControls));
+  });
   $('remember-key').addEventListener('change', () => {
     if (!$('remember-key').checked) {
       try { sessionStorage.removeItem(storageKey); } catch (_) { /* Memory remains available. */ }
@@ -233,14 +261,17 @@
   });
   $('filter-form').addEventListener('submit', event => { event.preventDefault(); loadSlots(); });
   $('refresh-button').addEventListener('click', loadSlots);
-  ['patient-name', 'patient-email'].forEach(id => $(id).addEventListener('input', () => {
-    attempt = null;
-    message('booking-message');
-    updateControls();
-  }));
+  ['patient-name', 'patient-email'].forEach(id => {
+    ['input', 'change'].forEach(event => $(id).addEventListener(event, () => {
+      attempt = null;
+      message('booking-message');
+      updateControls();
+    }));
+  });
   $('booking-form').addEventListener('submit', async event => {
     event.preventDefault();
-    if (submitting || !selected || remaining() > 0) return;
+    updateControls();
+    if ($('book-button').disabled) return;
     const name = $('patient-name').value.trim();
     const email = $('patient-email').value.trim().toLowerCase();
     if (!name || !email) { message('booking-message', 'Enter a name and a valid email address.', 'error'); return; }
@@ -286,7 +317,8 @@
   $('lookup-form').addEventListener('submit', async event => {
     event.preventDefault();
     const id = $('booking-id').value.trim();
-    if (!id || lookingUp || cancelling) return;
+    updateControls();
+    if ($('lookup-button').disabled) return;
     lookingUp = true;
     $('lookup-form').setAttribute('aria-busy', 'true');
     $('booking-result').hidden = true;
