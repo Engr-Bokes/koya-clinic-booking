@@ -29,7 +29,7 @@
       "dest": "/public/openapi.json"
     },
     {
-      "src": "/(app.js|styles.css|docs.css)",
+      "src": "/(app.js|styles.css|docs.css|favicon.svg|favicon.ico|apple-touch-icon.png)",
       "dest": "/public/$1"
     },
     {
