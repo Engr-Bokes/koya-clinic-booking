@@ -11,6 +11,7 @@
   let apiKey = '', currentSlots = [], selected = null, booking = null;
   let attempt = null, submitting = false, cancelling = false, loadingSlots = false, lookingUp = false;
   let slotRequest = 0, requests = 0, cooldownTimer = null;
+  let copyingReference = false, copiedReference = ''; 
 
   function message(id, text = '', kind = '') {
     const target = $(id);
@@ -62,6 +63,8 @@
     $('cancel-button').disabled = !booking || booking.status !== 'confirmed' || busy;
     $('cancel-yes').disabled = !booking || booking.status !== 'confirmed' || busy;
     $('cancel-no').disabled = cancelling;
+    $('copy-reference-button').disabled = !booking?.id || busy || copyingReference;
+    $('copy-reference-button').textContent = copyingReference ? 'Copying…' : copiedReference === booking?.id ? 'Copied' : 'Copy reference';
     $('cancel-yes').textContent = cancelling ? 'Cancelling…' : 'Yes, cancel appointment';
     $('access-ready-hint').textContent = busy ? 'Wait for the current request to finish.' : keyReady ? 'API key entered. You can connect.' : 'Enter your API key to enable Connect.';
     $('booking-ready-hint').textContent = !apiKey ? 'Connect with your API key first.' :
@@ -213,7 +216,11 @@
     $('result-status').textContent = booking.status;
     $('result-status').className = `status-badge${booking.status === 'cancelled' ? ' cancelled' : ''}`;
     $('result-details').replaceChildren();
-    addDetail('Booking reference', booking.id, 'reference');
+    if ($('confirmed-reference').textContent !== booking.id) {
+      copiedReference = '';
+      message('copy-reference-message');
+    }
+    $('confirmed-reference').textContent = booking.id;
     addDetail('Name', booking.name);
     addDetail('Email', booking.email);
     const slot = slots.get(booking.slot_id);
@@ -224,6 +231,7 @@
     $('cancel-confirm').hidden = true;
     $('cancel-button').hidden = false;
     if (focus) $('booking-result').focus();
+    updateControls();
   }
   function newIdempotencyKey() {
     if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -340,6 +348,29 @@
     } finally {
       lookingUp = false;
       $('lookup-form').setAttribute('aria-busy', 'false');
+      updateControls();
+    }
+  });
+  $('copy-reference-button').addEventListener('click', async () => {
+    if (!booking?.id || copyingReference || $('copy-reference-button').disabled) return;
+    const reference = booking.id;
+    copyingReference = true;
+    copiedReference = '';
+    message('copy-reference-message');
+    updateControls();
+    try {
+      if (!globalThis.navigator?.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await globalThis.navigator.clipboard.writeText(reference);
+      if (booking?.id === reference) {
+        copiedReference = reference;
+        message('copy-reference-message', 'Booking reference copied. Paste it somewhere safe for later.', 'success');
+      }
+    } catch (_) {
+      if (booking?.id === reference) {
+        message('copy-reference-message', 'Automatic copying was blocked by your browser. Select the reference above and use Copy, or press Ctrl+C (Cmd+C on Mac).', 'error');
+      }
+    } finally {
+      copyingReference = false;
       updateControls();
     }
   });

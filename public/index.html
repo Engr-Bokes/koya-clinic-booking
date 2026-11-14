@@ -58,7 +58,7 @@
           </fieldset>
           <p id="booking-message" class="message" role="status" aria-live="polite"></p>
         </form>
-        <p class="booking-footnote">Your booking reference appears here after confirmation. Save it to look up or cancel your appointment.</p>
+        <p class="booking-footnote">Your booking reference appears here after confirmation. Use Copy reference to save it for later lookup or cancellation.</p>
       </aside>
     </section>
 
@@ -69,6 +69,11 @@
       <p id="lookup-message" class="message" role="status" aria-live="polite"></p>
       <section id="booking-result" class="booking-result" aria-labelledby="result-title" tabindex="-1" hidden>
         <div class="section-heading"><h3 id="result-title">Booking details</h3><span id="result-status" class="status-badge"></span></div>
+        <div class="reference-row">
+          <div class="reference-content"><p class="reference-label">Booking reference</p><code id="confirmed-reference" class="reference" aria-label="Booking reference ID"></code></div>
+          <button id="copy-reference-button" class="secondary" type="button" aria-label="Copy booking reference" aria-describedby="copy-reference-message" disabled>Copy reference</button>
+        </div>
+        <p id="copy-reference-message" class="message" role="status" aria-live="polite"></p>
         <dl id="result-details" class="details-grid"></dl>
         <div id="cancel-actions"><button id="cancel-button" class="danger secondary" type="button">Cancel this appointment</button><div id="cancel-confirm" class="cancel-confirm" hidden><p>Cancel this appointment? The time will become available for someone else.</p><div class="button-row"><button id="cancel-yes" class="danger" type="button">Yes, cancel appointment</button><button id="cancel-no" class="secondary" type="button">Keep appointment</button></div></div></div>
         <p id="result-message" class="message" role="status" aria-live="polite"></p>
