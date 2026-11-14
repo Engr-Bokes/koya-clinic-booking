@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#125f58">
+  <meta name="description" content="CareSlot assessment demo: explore appointment slots and manage fictional bookings.">
+  <title>CareSlot | A little less waiting</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header wrap">
+    <a class="brand" href="#" aria-label="CareSlot home"><span class="brand-mark" aria-hidden="true">c<span>+</span></span>CareSlot</a>
+    <nav aria-label="Main navigation"><a href="#appointments">Find a time</a><a href="#manage">Manage booking</a></nav>
+    <span class="demo-tag">ASSESSMENT DEMO</span>
+  </header>
+  <main id="main" class="wrap">
+    <section class="hero" aria-labelledby="hero-title">
+      <div><p class="eyebrow">LESS WAITING. MORE CLARITY.</p><h1 id="hero-title">Your next appointment,<br><span>one simple step away.</span></h1><p class="hero-copy">Find a time that fits. Book it in moments.<br>Keep everything you need in one place.</p></div>
+      <div class="hero-note"><span class="note-line" aria-hidden="true"></span><p>On your time.</p><span>All appointment times are shown in<br><strong>West Africa Time (WAT · UTC+1)</strong><br>Africa/Lagos</span></div>
+    </section>
+
+    <section class="access card" aria-labelledby="access-title">
+      <div><p class="eyebrow">GET CONNECTED</p><h2 id="access-title">Your demo access</h2><p class="muted">Enter your API key to load appointment slots.</p></div>
+      <form id="access-form">
+        <div class="access-row"><div class="field grow"><label for="api-key">API key</label><input id="api-key" name="api-key" type="password" required autocomplete="off" spellcheck="false" aria-describedby="key-help"></div><button id="connect-button" type="submit">Connect</button></div>
+        <label class="check"><input id="remember-key" type="checkbox">Keep the key for this tab’s session</label>
+        <p id="key-help" class="hint">Kept in memory unless you opt in. Never saved in local storage.</p>
+        <p id="access-message" class="message" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="appointments" class="booking-layout" aria-labelledby="slots-title">
+      <div class="slots-panel">
+        <div class="section-heading"><div><p class="eyebrow">01 / FIND YOUR TIME</p><h2 id="slots-title">Available appointments</h2></div><span class="timezone-tag">WAT · UTC+1</span></div>
+        <form id="filter-form" class="filter-row">
+          <div class="field grow"><label for="provider">Provider name <span class="optional">(optional)</span></label><input id="provider" name="provider" placeholder="Exact provider name" autocomplete="off" aria-describedby="provider-help" disabled></div>
+          <button id="filter-button" class="secondary" type="submit" disabled>Apply filter</button>
+        </form>
+        <p id="provider-help" class="hint">Exact match, including capitalisation. Leave blank to show all providers.</p>
+        <div class="results-heading"><p id="slot-count" class="muted">Connect to view appointment times.</p><button id="refresh-button" type="button" class="text-button" disabled>Refresh slots</button></div>
+        <p id="slots-message" class="message" role="status" aria-live="polite"></p>
+        <fieldset id="slot-options" class="slot-options" disabled><legend class="sr-only">Choose an appointment time, all times in West Africa Time</legend><div id="slots-list"><div class="empty-state"><span class="empty-symbol" aria-hidden="true">+</span><h3>A time that works for you</h3><p>Connect with your demo API key to see the schedule.</p></div></div></fieldset>
+      </div>
+      <aside class="booking-card card" aria-labelledby="booking-title">
+        <p class="eyebrow">02 / MAKE IT YOURS</p><h2 id="booking-title">Book your appointment</h2>
+        <div id="selected-slot" class="selected-slot"><span class="muted">No time selected</span><p>Choose an available appointment to get started.</p></div>
+        <form id="booking-form">
+          <fieldset id="booking-fields" disabled><legend class="sr-only">Patient details</legend>
+            <div class="field"><label for="patient-name">Full name</label><input id="patient-name" name="name" autocomplete="name" required maxlength="200" placeholder="e.g. Alex Morgan"></div>
+            <div class="field"><label for="patient-email">Email address</label><input id="patient-email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="alex@example.com"></div>
+            <p class="hint">This is a demo. Please use fictional details.</p>
+            <button id="book-button" class="full-width" type="submit">Confirm appointment</button>
+          </fieldset>
+          <p id="booking-message" class="message" role="status" aria-live="polite"></p>
+        </form>
+        <p class="booking-footnote">Your booking reference appears here after confirmation. Save it to look up or cancel your appointment.</p>
+      </aside>
+    </section>
+
+    <section id="manage" class="manage card" aria-labelledby="manage-title">
+      <div><p class="eyebrow">ALREADY BOOKED?</p><h2 id="manage-title">Pick up where you left off.</h2><p class="muted">Look up a booking to check its details or cancel it.</p></div>
+      <form id="lookup-form"><div class="field"><label for="booking-id">Booking reference</label><input id="booking-id" name="booking-id" required autocomplete="off" spellcheck="false" placeholder="Enter your booking ID" disabled></div><button id="lookup-button" class="secondary" type="submit" disabled>Find booking</button></form>
+      <p id="lookup-message" class="message" role="status" aria-live="polite"></p>
+      <section id="booking-result" class="booking-result" aria-labelledby="result-title" tabindex="-1" hidden>
+        <div class="section-heading"><h3 id="result-title">Booking details</h3><span id="result-status" class="status-badge"></span></div>
+        <dl id="result-details" class="details-grid"></dl>
+        <div id="cancel-actions"><button id="cancel-button" class="danger secondary" type="button">Cancel this appointment</button><div id="cancel-confirm" class="cancel-confirm" hidden><p>Cancel this appointment? The time will become available for someone else.</p><div class="button-row"><button id="cancel-yes" class="danger" type="button">Yes, cancel appointment</button><button id="cancel-no" class="secondary" type="button">Keep appointment</button></div></div></div>
+        <p id="result-message" class="message" role="status" aria-live="polite"></p>
+      </section>
+    </section>
+    <noscript><p class="message error">JavaScript is needed to load slots and manage bookings. Please enable it to use this demo.</p></noscript>
+  </main>
+  <footer class="site-footer wrap"><span class="footer-brand">CareSlot</span><p>Assessment demo. Use fictional patient details.</p><span>A little less waiting.</span></footer>
+</body>
+</html>
