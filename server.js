@@ -13,8 +13,8 @@ async function start() {
   await initDb(pool);
   const app = express();
   app.disable('x-powered-by');
-  app.get('/docs', (req, res) => res.sendFile(path.join(__dirname, 'public/docs.html')));
-  app.get('/docs/openapi.json', (req, res) => res.sendFile(path.join(__dirname, 'public/openapi.json')));
+  app.get('/docs', (req, res) => res.sendFile('docs.html', { root: path.join(__dirname, 'public') }));
+  app.get('/docs/openapi.json', (req, res) => res.sendFile('openapi.json', { root: path.join(__dirname, 'public') }));
   app.use(express.static(path.join(__dirname, 'public')));
   app.use(createHttpApp({ pool, apiKey }));
   const server = app.listen(Number(process.env.PORT) || 3000, '127.0.0.1', () => {
