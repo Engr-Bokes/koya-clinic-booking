@@ -9,15 +9,17 @@ const { webcrypto } = require('node:crypto');
 // A minimal DOM harness exercises the shipped event handlers without dependencies.
 // Real browser validity and visual states are also verified before deployment.
 function loadFrontend(savedKey = null, options = {}) {
+  let activeElement = null;
   class Element {
     constructor(tag = 'div') { this.tagName=tag.toUpperCase();this.value='';this.disabled=false;this.checked=false;this.hidden=false;this.textContent='';this.children=[];this.listeners=new Map();this.attributes={}; }
     get validity() { return {valid:this.type!=='email'||!this.value||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value.trim())}; }
     addEventListener(type,fn) { if(!this.listeners.has(type))this.listeners.set(type,[]);this.listeners.get(type).push(fn); }
-    async dispatch(type) { for(const fn of this.listeners.get(type)||[]) await fn({preventDefault(){}}); }
+    async dispatch(type,extra={}) { for(const fn of this.listeners.get(type)||[]) await fn({preventDefault(){},...extra}); }
     append(...children) { this.children.push(...children); }
     replaceChildren(...children) { this.children=[...children]; }
     setAttribute(key,value) { this.attributes[key]=value; }
-    focus() {}
+    focus(options) { activeElement=this;this.focusOptions=options; }
+    scrollIntoView(options) { this.scrollOptions=options; }
   }
   const html=fs.readFileSync(path.join(__dirname,'../public/index.html'),'utf8');
   const elements=new Map();for(const match of html.matchAll(/<([a-z]+)\b[^>]*\bid="([^"]+)"[^>]*>/g)){
@@ -25,9 +27,9 @@ function loadFrontend(savedKey = null, options = {}) {
   }
   const respond=options.respond;
   const calls=[];const slots=[{id:'future',provider:'Dr Demo',start:new Date(Date.now()+86400000).toISOString(),end:new Date(Date.now()+88200000).toISOString(),available:true}];
-  const context={navigator:options.clipboard?{clipboard:options.clipboard}:{},document:{getElementById:id=>{assert.ok(elements.has(id),`Unknown field ${id}`);return elements.get(id);},createElement:tag=>new Element(tag)},sessionStorage:{getItem:()=>savedKey,setItem(){},removeItem(){}},fetch:async(url,options)=>{calls.push({url,method:options.method});if(respond)return respond(url,options);assert.equal(url,'/api/slots','Invalid or incomplete forms must not make a booking/lookup request');return{ok:true,status:200,headers:{get:()=>null},json:async()=>({slots})};},AbortController,Intl,Date,Map,Set,JSON,URLSearchParams,Uint8Array,crypto:webcrypto,setTimeout,clearTimeout,setInterval,clearInterval};
+  const context={matchMedia:()=>({matches:options.reducedMotion===true}),navigator:options.clipboard?{clipboard:options.clipboard}:{},document:{getElementById:id=>{assert.ok(elements.has(id),`Unknown field ${id}`);return elements.get(id);},createElement:tag=>new Element(tag)},sessionStorage:{getItem:()=>savedKey,setItem(){},removeItem(){}},fetch:async(url,options)=>{calls.push({url,method:options.method});if(respond)return respond(url,options);assert.equal(url,'/api/slots','Invalid or incomplete forms must not make a booking/lookup request');return{ok:true,status:200,headers:{get:()=>null},json:async()=>({slots})};},AbortController,Intl,Date,Map,Set,JSON,URLSearchParams,Uint8Array,crypto:webcrypto,setTimeout,clearTimeout,setInterval,clearInterval};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../public/app.js'),'utf8'),context);
-  return{elements,calls,async input(id,value,event='input'){elements.get(id).value=value;await elements.get(id).dispatch(event);}};
+  return{elements,calls,get activeElement(){return activeElement;},async input(id,value,event='input'){elements.get(id).value=value;await elements.get(id).dispatch(event);}};
 }
 
 test('form buttons require trimmed fields, valid email and a selected slot, and react to clearing',async()=>{
@@ -99,4 +101,22 @@ test('pending copy is disabled and never reports an old ID as copied for a new b
   const pending=el('copy-reference-button').dispatch('click');assert.equal(el('copy-reference-button').disabled,true);assert.equal(el('copy-reference-button').textContent,'Copying…');
   await ui.input('booking-id','booking-two');await el('lookup-form').dispatch('submit');resolveCopy();await pending;
   assert.equal(el('confirmed-reference').textContent,'booking-two');assert.equal(el('copy-reference-button').textContent,'Copy reference');assert.equal(el('copy-reference-message').textContent,'');assert.equal(el('copy-reference-button').disabled,false);
+});
+
+async function setupSlotFocus(options={}) {
+  const ui=loadFrontend(null,options);await ui.input('api-key','test-key');await ui.elements.get('access-form').dispatch('submit');return ui;
+}
+test('selecting a slot brings the booking panel into view and focuses the name field',async()=>{
+  const ui=await setupSlotFocus();const el=id=>ui.elements.get(id);const radio=el('slots-list').children[0].children[0];
+  await radio.dispatch('change');assert.equal(ui.activeElement,el('patient-name'));assert.equal(el('booking-panel').scrollOptions.behavior,'smooth');assert.equal(el('booking-panel').scrollOptions.block,'start');assert.equal(el('patient-name').focusOptions.preventScroll,true);assert.equal(el('booking-fields').disabled,false);assert.equal(el('book-button').disabled,true);assert.equal(ui.calls.length,1,'Selecting a slot never submits a booking');assert.equal(radio.attributes['aria-controls'],'booking-form');
+});
+test('slot navigation preserves entered values and focuses email or confirmation as appropriate',async()=>{
+  const ui=await setupSlotFocus();const el=id=>ui.elements.get(id);const radio=el('slots-list').children[0].children[0];
+  await ui.input('patient-name','Alex Demo');await radio.dispatch('change');assert.equal(ui.activeElement,el('patient-email'));assert.equal(el('patient-name').value,'Alex Demo');
+  await ui.input('patient-email','alex@example.com');await radio.dispatch('change');assert.equal(ui.activeElement,el('book-button'));assert.equal(el('patient-email').value,'alex@example.com');assert.equal(el('book-button').disabled,false);assert.equal(ui.calls.length,1);
+});
+test('slot navigation respects reduced motion and does not steal focus during arrow-key browsing',async()=>{
+  const ui=await setupSlotFocus({reducedMotion:true});const el=id=>ui.elements.get(id);const radio=el('slots-list').children[0].children[0];
+  radio.focus();await radio.dispatch('keydown',{key:'ArrowDown'});await radio.dispatch('change');assert.equal(ui.activeElement,radio);assert.equal(el('booking-panel').scrollOptions,undefined);
+  await radio.dispatch('pointerdown');await radio.dispatch('change');assert.equal(ui.activeElement,el('patient-name'));assert.equal(el('booking-panel').scrollOptions.behavior,'auto');assert.equal(ui.calls.length,1);
 });

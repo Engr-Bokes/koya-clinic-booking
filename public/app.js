@@ -136,6 +136,15 @@
     }
     updateControls();
   }
+  function focusBookingForm() {
+    // The form is enabled by renderSelection before focus moves here.
+    const name = $('patient-name').value.trim();
+    const target = !name || name.length > 200 ? $('patient-name') :
+      !validBookingDetails() || $('book-button').disabled ? $('patient-email') : $('book-button');
+    const reduceMotion = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
+    $('booking-panel').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    target.focus({ preventScroll: true });
+  }
   function renderSlots() {
     const list = $('slots-list');
     list.replaceChildren();
@@ -148,6 +157,7 @@
       return;
     }
     if (!count) message('slots-message', 'No future appointments are available in this schedule. Try a different provider or refresh.');
+    let browsingWithArrowKeys = false;
     currentSlots.forEach(slot => {
       const available = usable(slot);
       const label = element('label', `slot-option${available ? '' : ' unavailable'}`);
@@ -155,6 +165,11 @@
       radio.type = 'radio'; radio.name = 'slot'; radio.value = slot.id;
       radio.disabled = !available; radio.checked = selected?.id === slot.id;
       const status = available ? 'Available' : Date.parse(slot.start) <= Date.now() ? 'Past' : 'Unavailable';
+      radio.setAttribute('aria-controls', 'booking-form');
+      radio.addEventListener('pointerdown', () => { browsingWithArrowKeys = false; });
+      radio.addEventListener('keydown', event => {
+        browsingWithArrowKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
+      });
       radio.setAttribute('aria-label', `${slot.provider}, ${schedule(slot)}, ${status}`);
       const content = element('div', 'slot-content');
       content.append(element('div', 'slot-provider', slot.provider), element('div', 'slot-date', day(slot.start)), element('div', 'slot-time', `${time(slot.start)}–${time(slot.end)} WAT`));
@@ -163,6 +178,9 @@
         attempt = null;
         message('booking-message');
         renderSelection();
+        // Keep native arrow-key browsing within the radio group.
+        if (!browsingWithArrowKeys) focusBookingForm();
+        browsingWithArrowKeys = false;
       });
       label.append(radio, content, element('span', 'slot-label', status));
       list.append(label);

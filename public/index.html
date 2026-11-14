@@ -46,9 +46,10 @@
         <p id="provider-help" class="hint">Exact match, including capitalisation. Leave blank to show all providers.</p>
         <div class="results-heading"><p id="slot-count" class="muted">Connect to view appointment times.</p><button id="refresh-button" type="button" class="text-button" disabled>Refresh slots</button></div>
         <p id="slots-message" class="message" role="status" aria-live="polite"></p>
-        <fieldset id="slot-options" class="slot-options" disabled><legend class="sr-only">Choose an appointment time, all times in West Africa Time</legend><div id="slots-list"><div class="empty-state"><span class="empty-symbol" aria-hidden="true">+</span><h3>A time that works for you</h3><p>Connect with your demo API key to see the schedule.</p></div></div></fieldset>
+        <p id="slot-flow-help" class="hint">Select an available time to continue to the booking form.</p>
+        <fieldset id="slot-options" class="slot-options" aria-describedby="slot-flow-help" disabled><legend class="sr-only">Choose an appointment time, all times in West Africa Time</legend><div id="slots-list"><div class="empty-state"><span class="empty-symbol" aria-hidden="true">+</span><h3>A time that works for you</h3><p>Connect with your demo API key to see the schedule.</p></div></div></fieldset>
       </div>
-      <aside class="booking-card card" aria-labelledby="booking-title">
+      <aside id="booking-panel" class="booking-card card" aria-labelledby="booking-title">
         <p class="eyebrow">02 / MAKE IT YOURS</p><h2 id="booking-title">Book your appointment</h2>
         <div id="selected-slot" class="selected-slot"><span class="muted">No time selected</span><p>Choose an available appointment to get started.</p></div>
         <form id="booking-form">
