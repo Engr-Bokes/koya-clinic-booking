@@ -2,6 +2,7 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const storageKey = 'careslot.apiKey';
+  const apiBase = '/api';
   const zone = 'Africa/Lagos';
   const dateFormat = new Intl.DateTimeFormat('en-GB', { timeZone: zone, weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   const timeFormat = new Intl.DateTimeFormat('en-GB', { timeZone: zone, hour: '2-digit', minute: '2-digit', hour12: false });
@@ -60,7 +61,7 @@
     requests++;
     updateControls();
     try {
-      const response = await fetch(url, {
+      const response = await fetch(apiBase + url, {
         method: options.method || 'GET',
         headers: { Accept: 'application/json', 'X-API-Key': apiKey, ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...(options.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {}) },
         ...(options.body ? { body: options.body } : {}),

@@ -30,3 +30,7 @@ A client-generated Idempotency-Key identifies one booking attempt. Replaying it 
 ## Scope limitations to be clear about
 
 The assessment specifies a single shared API key. That is not an appropriate end-user authentication model for real health records. A real deployment would require individual authentication, authorization, audit trails, monitoring, stronger abuse prevention, and data-retention policies. Do not use real patient data in the assessment demo.
+
+## Frontend and API separation
+
+The patient-facing page is at `/`. The frontend calls the authenticated backend under `/api`, and `/docs` explains the API contract and header-based key usage. Public `GET /api` returns discovery metadata only, never private credentials or patient data. Root-level booking routes remain aliases of the same handlers for compatibility, so authentication, idempotency, and rate limits are shared rather than duplicated. Static documentation uses placeholders only.

@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('node:path');
 const { Pool } = require('pg');
-const { createApp } = require('./src/app');
+const { createHttpApp } = require('./src/http');
 const { initDb } = require('./src/db');
 
 async function start() {
@@ -13,8 +13,10 @@ async function start() {
   await initDb(pool);
   const app = express();
   app.disable('x-powered-by');
+  app.get('/docs', (req, res) => res.sendFile(path.join(__dirname, 'public/docs.html')));
+  app.get('/docs/openapi.json', (req, res) => res.sendFile(path.join(__dirname, 'public/openapi.json')));
   app.use(express.static(path.join(__dirname, 'public')));
-  app.use(createApp({ pool, apiKey }));
+  app.use(createHttpApp({ pool, apiKey }));
   const server = app.listen(Number(process.env.PORT) || 3000, '127.0.0.1', () => {
     console.log(`CareSlot is running at http://localhost:${server.address().port}`);
   });

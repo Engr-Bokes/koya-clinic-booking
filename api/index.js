@@ -1,5 +1,5 @@
 const { Pool } = require('pg');
-const { createApp } = require('../src/app');
+const { createHttpApp } = require('../src/http');
 const { initDb } = require('../src/db');
 let ready;
 
@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
       if (!process.env.DATABASE_URL || !process.env.API_KEY) throw new Error('Missing server configuration');
       const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
       await initDb(pool);
-      return createApp({ pool, apiKey: process.env.API_KEY });
+      return createHttpApp({ pool, apiKey: process.env.API_KEY });
     })().catch(error => { ready = undefined; throw error; });
   }
   try {
